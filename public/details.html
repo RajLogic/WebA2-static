@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details - Tourism Victoria</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav id="navbar"></nav>
+
+    <main>
+        <div class="details-confirm">
+            <div class="details-confirm-data" id="eventDetails">
+                <p>Loading event details...</p>
+            </div>
+
+            <h2>Options</h2>
+            <div class="details-buttons">
+                <a href="/" class="details-home">Return</a>
+                <a href="#" id="modifyLink" class="details-modify">Modify Data</a>
+                <a href="#" id="deleteLink" class="details-delete">Delete Data</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Rajlogic 2023</p>
+    </footer>
+
+    <script src="/js/nav.js"></script>
+    <script>
+        let currentEventId = null;
+
+        async function loadEventDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentEventId = urlParams.get('id');
+
+            if (!currentEventId) {
+                document.getElementById('eventDetails').innerHTML = '<p>No event ID provided</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/events/${currentEventId}`);
+                const { success, data } = await response.json();
+
+                if (success) {
+                    const imgSrc = data.image.match(/^https?:\/\//i) || data.image.startsWith('/')
+                        ? data.image
+                        : `/uploads/images/${data.image}`;
+
+                    document.getElementById('eventDetails').innerHTML = `
+                        <h2>Event Information</h2>
+                        <p><strong>ID:</strong> ${escapeHtml(data.id)}</p>
+                        <p><strong>Name:</strong> ${escapeHtml(data.name)}</p>
+                        <p><strong>Event:</strong> ${escapeHtml(data.event)}</p>
+                        <p><strong>Venue:</strong> ${escapeHtml(data.venue)}</p>
+                        <p><strong>Topic:</strong> ${escapeHtml(data.topic)}</p>
+                        <p><strong>Details:</strong> ${escapeHtml(data.details)}</p>
+                        <p><strong>Image:</strong><br>
+                            <img src="${imgSrc}" alt="Event Image" class="event-image">
+                        </p>
+                    `;
+
+                    // Set up action links
+                    document.getElementById('modifyLink').href = `/update.html?id=${currentEventId}`;
+                    document.getElementById('deleteLink').addEventListener('click', confirmDelete);
+                } else {
+                    document.getElementById('eventDetails').innerHTML = '<p>Event not found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading event:', error);
+                document.getElementById('eventDetails').innerHTML = '<p>Error loading event details</p>';
+            }
+        }
+
+        async function confirmDelete(e) {
+            e.preventDefault();
+
+            if (!confirm('Are you sure you want to delete this event?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/events/${currentEventId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Event deleted successfully');
+                    window.location.href = '/modify';
+                } else {
+                    alert('Failed to delete event: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error deleting event: ' + error.message);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadEventDetails);
+    </script>
+</body>
+
+</html>

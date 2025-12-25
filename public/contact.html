@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - Tourism Victoria</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav id="navbar"></nav>
+
+    <main>
+        <div id="page" class="contact-page">
+            <div class="contact-form">
+                <h2>General Enquiries</h2>
+                <p>For general enquiries, please contact us using the form below:</p>
+                <form action="https://formspree.io/f/xrbzvyre" method="POST" class="form-contact">
+                    <label>Name:</label>
+                    <input type="text" id="firstName" name="Firstname" required placeholder="First Name">
+                    <input type="text" id="lastName" name="Lastname" required placeholder="Last Name">
+
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+
+                    <label for="subject">Subject:</label>
+                    <input type="text" id="subject" name="subject" required>
+
+                    <label for="message">Message:</label>
+                    <textarea id="message" name="message" required></textarea>
+
+                    <button type="submit" value="submit">Send Message</button>
+                </form>
+            </div>
+
+            <div class="contact-us">
+                <h2>Contact Information</h2>
+                <p>For all other enquiries, please contact us using the details below:</p>
+                <p>Phone: 1800 123 456</p>
+                <p>Email: <a href="mailto:s4091470@student.rmit.edu.au">s4091470@student.rmit.edu.au</a></p>
+                <p>Address: Building 80/435-457 Swanston St, Melbourne VIC 3000</p>
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d25217.77660277474!2d144.96286!3d-37.808267!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6ad642cb67178b05%3A0xe5c2160ff784f314!2sBuilding%2080%20(Swanston%20Academic%20Building)%20-%20RMIT%20University!5e0!3m2!1sen!2sau!4v1726364475577!5m2!1sen!2sau"
+                    width="600" height="400" style="border:0;" allowfullscreen="" loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Rajlogic 2023</p>
+    </footer>
+
+    <script src="/js/nav.js"></script>
+</body>
+
+</html>

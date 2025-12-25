@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Events - Tourism Victoria</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav id="navbar"></nav>
+
+    <main>
+        <form class="find_form" id="findForm">
+            <h2>Find Data</h2>
+            <hr>
+            <label>Select option</label>
+            <select name="find_option" id="find_option" required>
+                <option value="">Select Column</option>
+                <option value="name">Name</option>
+                <option value="event">Event</option>
+                <option value="venue">Venue</option>
+                <option value="topic">Topic</option>
+            </select>
+            <select name="find_value" id="find_value" required>
+                <option value="">Select Value</option>
+            </select>
+            <input type="submit" name="find" value="Find" class="find">
+            <button type="button" id="clearBtn" class="find" style="display:none; margin-top:10px;">Clear
+                Search</button>
+        </form>
+
+        <div class="modify-container2">
+            <section class="modify-view2">
+                <h2 id="resultsTitle">All Events View</h2>
+                <h3>Click on an event to view more details</h3>
+                <div class="modify-scroll">
+                    <table class="modify-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Event</th>
+                                <th>Venue</th>
+                                <th>Topic</th>
+                                <th>Details</th>
+                                <th>Image</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTable">
+                            <tr>
+                                <td colspan="7">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Rajlogic 2023</p>
+    </footer>
+
+    <script src="/js/nav.js"></script>
+    <script src="/js/find.js"></script>
+</body>
+
+</html>

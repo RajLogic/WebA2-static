@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modify Events - Tourism Victoria</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav id="navbar"></nav>
+
+    <main>
+        <div class="modify-container" id="mainContainer">
+            <section class="modify-view">
+                <h2>All Events View</h2>
+                <div class="modify-scroll">
+                    <table class="modify-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Event</th>
+                                <th>Venue</th>
+                                <th>Topic</th>
+                                <th>Details</th>
+                                <th>Image</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTable">
+                            <tr>
+                                <td colspan="7">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="modify-edit">
+                <h2>Modify Event</h2>
+                <form id="selectForm">
+                    <label for="eventSelect">Select ID to Edit:</label>
+                    <select name="event" id="eventSelect">
+                        <option value="">Select an event</option>
+                    </select>
+                    <input type="submit" value="Edit" class="select_event">
+                </form>
+
+                <form id="editForm" style="display: none;" enctype="multipart/form-data">
+                    <input type="hidden" name="id" id="editId">
+                    <input type="hidden" name="current_image" id="currentImage">
+
+                    <label for="editIdDisplay">ID:</label>
+                    <input type="text" id="editIdDisplay" disabled>
+
+                    <label for="editName">Name:</label>
+                    <input type="text" name="name" id="editName" required>
+
+                    <label for="editEvent">Event:</label>
+                    <input type="text" name="event" id="editEvent" required>
+
+                    <label for="editVenue">Venue:</label>
+                    <input type="text" name="venue" id="editVenue" required>
+
+                    <label for="editTopic">Topic:</label>
+                    <input type="text" name="topic" id="editTopic" required>
+
+                    <label for="editDetails">Details:</label>
+                    <textarea name="details" id="editDetails" required></textarea>
+
+                    <label for="editImage">Image:</label>
+                    <input type="file" name="image" id="editImage" accept="image/jpeg, image/jpg, image/gif">
+                    <small>Leave empty to keep current image</small>
+
+                    <div class="update_delete">
+                        <button type="submit" class="update_event">Update</button>
+                        <button type="button" class="delete_event" onclick="deleteEvent()">Delete</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <section class="submission-page" id="successSection" style="display: none;">
+            <div class="form-submission">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                </svg>
+                <h2 id="successTitle">Success</h2>
+                <p id="successMessage"></p>
+                <div class="buttons">
+                    <button class="submit-event" onclick="location.reload()">Edit Another Event</button>
+                    <button class="return-home" onclick="location.href='/'">Return Home</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; Rajlogic 2023</p>
+    </footer>
+
+    <script src="/js/nav.js"></script>
+    <script src="/js/modify.js"></script>
+</body>
+
+</html>

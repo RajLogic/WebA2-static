@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery - Tourism Victoria</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav id="navbar"></nav>
+
+    <main>
+        <h2>All Events View</h2>
+        <div class='display-all-data' id="galleryContainer">
+            <p>Loading events...</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Rajlogic 2023</p>
+    </footer>
+
+    <script src="/js/nav.js"></script>
+    <script>
+        async function loadGallery() {
+            const container = document.getElementById('galleryContainer');
+
+            try {
+                const response = await fetch('/api/events');
+                const { success, data } = await response.json();
+
+                if (success && data.length > 0) {
+                    container.innerHTML = data.map(event => {
+                        const imgSrc = event.image.match(/^https?:\/\//i) || event.image.startsWith('/')
+                            ? event.image
+                            : `/uploads/images/${event.image}`;
+
+                        return `
+                            <a class='display-all-datas' href='/display.html?id=${event.id}'>
+                                <img src='${imgSrc}' alt='Event Image' class='event-image'>
+                                <p>Venue: ${escapeHtml(event.venue)}</p>
+                                <p>Event: ${escapeHtml(event.event)}</p>
+                                <span class='read-more'>Click to<br>Read More</span>
+                            </a>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<p>No events found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                container.innerHTML = '<p>Error loading events.</p>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadGallery);
+    </script>
+</body>
+
+</html>

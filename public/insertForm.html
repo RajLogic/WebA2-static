@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insert Event - Tourism Victoria</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav id="navbar"></nav>
+
+    <main>
+        <section class="form-section" id="formSection">
+            <h2 class="form-title">Event Submission</h2>
+            <p class="form-subtitle">Fill in the details for your event below</p>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+            <form class="event-form" id="eventForm" enctype="multipart/form-data">
+                <label for="name">Name: <span class="required">*</span></label>
+                <input type="text" id="name" name="name" placeholder="Enter your name" required>
+
+                <label for="event">Event Name: <span class="required">*</span></label>
+                <input type="text" id="event" name="event" placeholder="Enter the event name" required>
+
+                <label for="venue">Venue: <span class="required">*</span></label>
+                <input type="text" id="venue" name="venue" placeholder="Enter the venue" required>
+
+                <label for="topic">Topic: <span class="required">*</span></label>
+                <input type="text" id="topic" name="topic" placeholder="Enter the topic" required>
+
+                <label for="details">Details: <span class="required">*</span></label>
+                <textarea id="details" name="details" placeholder="Provide event details" required></textarea>
+
+                <label for="image">Photo: <span class="required">*</span></label>
+                <input type="file" id="image" name="image" accept="image/jpeg, image/jpg, image/gif" required>
+
+                <div class="form-buttons">
+                    <button type="submit" class="submit-button">Submit</button>
+                    <button type="reset" class="clear-button">Clear</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="submission-page" id="successSection" style="display: none;">
+            <div class="form-submission">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                </svg>
+
+                <h2>Event Submitted Successfully!</h2>
+                <p>Your event has been added to the database</p>
+                <div class="buttons">
+                    <button class="submit-event" onclick="location.reload()">Submit Another Event</button>
+                    <button class="return-home" onclick="location.href='/'">Return Home</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; Rajlogic 2023</p>
+    </footer>
+
+    <script src="/js/nav.js"></script>
+    <script>
+        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const errorDiv = document.getElementById('errorMessage');
+
+            try {
+                const response = await fetch('/api/events', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('formSection').style.display = 'none';
+                    document.getElementById('successSection').style.display = 'block';
+                } else {
+                    errorDiv.textContent = result.error || 'An error occurred';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Failed to submit event: ' + error.message;
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+
+</html>

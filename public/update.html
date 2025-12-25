@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Event - Tourism Victoria</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav id="navbar"></nav>
+
+    <main>
+        <div class="update-container" id="updateContainer">
+            <div class="current-data" id="currentData">
+                <p>Loading current event data...</p>
+            </div>
+
+            <div class="update-form">
+                <form id="updateForm" enctype="multipart/form-data">
+                    <h2>Update Event Information</h2>
+                    <input type="hidden" name="id" id="eventId">
+                    <input type="hidden" name="current_image" id="currentImage">
+
+                    <label>Name:</label>
+                    <input type="text" name="name" id="name" required>
+
+                    <label>Event:</label>
+                    <input type="text" name="event" id="event" required>
+
+                    <label>Venue:</label>
+                    <input type="text" name="venue" id="venue" required>
+
+                    <label>Topic:</label>
+                    <input type="text" name="topic" id="topic" required>
+
+                    <label>Details:</label>
+                    <textarea name="details" id="details" required></textarea>
+
+                    <label>Image:</label>
+                    <input type="file" name="image" class="image-upload" accept="image/jpeg, image/jpg, image/gif">
+                    <small>Leave empty to keep current image</small>
+
+                    <div class="update-form-buttons">
+                        <button type="submit" class="update-submit-button">Update</button>
+                        <button type="reset" class="update-reset-button">Reset</button>
+                        <button type="button" class="update-cancel-button"
+                            onclick="window.location.href='/modify'">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <section class="submission-page" id="successSection" style="display: none;">
+            <div class="form-submission">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                </svg>
+                <h2>Event Updated Successfully!</h2>
+                <p>Your changes have been saved</p>
+                <div class="buttons">
+                    <button class="submit-event" onclick="location.href='/modify'">Edit Another Event</button>
+                    <button class="return-home" onclick="location.href='/'">Return Home</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; Rajlogic 2023</p>
+    </footer>
+
+    <script src="/js/nav.js"></script>
+    <script src="/js/update.js"></script>
+</body>
+
+</html>
