@@ -78,12 +78,15 @@ if (!isVercel) {
 }
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-this-in-production',
+    resave: true, // Changed to true for Vercel
     saveUninitialized: false,
+    rolling: true, // Refresh session on every request
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        secure: false, // Set to false temporarily to debug
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000, // 1 hour
+        sameSite: 'lax' // Changed from strict to lax
     }
 }));
 
