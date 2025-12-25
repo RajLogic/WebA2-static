@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insert Event - Tourism Victoria</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .error-message {
+            color: #dc2626;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #dc2626;
+            background-color: #fee2e2;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 
 <body>
@@ -72,6 +82,12 @@
 
             const formData = new FormData(e.target);
             const errorDiv = document.getElementById('errorMessage');
+            const submitBtn = e.target.querySelector('.submit-button');
+
+            // Disable submit button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            errorDiv.style.display = 'none';
 
             try {
                 const response = await fetch('/api/events', {
@@ -87,10 +103,15 @@
                 } else {
                     errorDiv.textContent = result.error || 'An error occurred';
                     errorDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit';
                 }
             } catch (error) {
+                console.error('Submission error:', error);
                 errorDiv.textContent = 'Failed to submit event: ' + error.message;
                 errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
             }
         });
     </script>

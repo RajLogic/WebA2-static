@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { dbConfig } = require('./config/config');
 const DbController = require('./config/DbController');
 const auth = require('./middleware/auth');
@@ -11,17 +12,37 @@ const { vercelBlobPut, vercelBlobDelete } = require('./config/vercelBlob');
 const app = express();
 const db = new DbController(dbConfig);
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads', 'images');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads directory:', uploadsDir);
+}
+
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/images/');
+        cb(null, uploadsDir);
     },
     filename: (req, file, cb) => {
         const uniqueName = Date.now() + '_' + Math.random().toString(36).substr(2, 9) + path.extname(file.originalname);
         cb(null, uniqueName);
     }
 });
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/gif', 'image/png'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only JPEG, JPG, GIF, and PNG are allowed.'));
+        }
+    },
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+});
 
 // Middleware
 app.use(express.json());
@@ -107,6 +128,7 @@ app.post('/api/events', auth.requireLoginJson, upload.single('image'), async (re
                 const fs = require('fs').promises;
                 await fs.unlink(req.file.path).catch(() => { });
             } else {
+                // Keep local file if blob upload fails
                 imageUrl = req.file.filename;
             }
         }
@@ -114,6 +136,7 @@ app.post('/api/events', auth.requireLoginJson, upload.single('image'), async (re
         const id = await db.insertQuery(name, event, venue, topic, details, imageUrl, timestamp);
         res.json({ success: true, id });
     } catch (error) {
+        console.error('Error inserting event:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

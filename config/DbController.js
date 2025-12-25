@@ -5,12 +5,16 @@ const path = require('path');
 
 class DbController {
     constructor(config) {
+        if (!config || !config.host) {
+            throw new Error('Invalid database configuration. Please check your .env file.');
+        }
+
         this.pool = new Pool({
             host: config.host,
-            user: config.username,
+            user: config.user,
             password: config.password,
             database: config.database,
-            ssl: config.ssl,
+            port: config.port || 5432,
             max: 20,
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 2000,
@@ -43,10 +47,10 @@ class DbController {
                 image,
                 timestamp
             ]);
-            return { success: true, id: result.rows[0].id };
+            return result.rows[0].id;
         } catch (error) {
             this.logError(error.message);
-            throw new Error('Failed to insert record');
+            throw error;
         }
     }
 
@@ -134,9 +138,19 @@ class DbController {
     }
 
     logError(error) {
-        const logPath = path.join('logs', 'my-errors.log');
+        const logDir = path.join(__dirname, '..', 'logs');
+        const logPath = path.join(logDir, 'my-errors.log');
         const timestamp = new Date().toISOString();
         const logMessage = `[${timestamp}] SQL Error: ${error}\n`;
+
+        // Ensure logs directory exists
+        try {
+            if (!require('fs').existsSync(logDir)) {
+                require('fs').mkdirSync(logDir, { recursive: true });
+            }
+        } catch (err) {
+            console.error('Failed to create logs directory:', err);
+        }
 
         fs.appendFile(logPath, logMessage).catch(err => {
             console.error('Failed to write to log file:', err);
