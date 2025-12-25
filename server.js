@@ -1,4 +1,4 @@
-// server.js - Main Express server
+// server.js - Main Express server (Vercel-compatible)
 const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
@@ -12,11 +12,22 @@ const { vercelBlobPut, vercelBlobDelete } = require('./config/vercelBlob');
 const app = express();
 const db = new DbController(dbConfig);
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads', 'images');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created uploads directory:', uploadsDir);
+// Determine if running on Vercel
+const isVercel = process.env.VERCEL || process.env.NOW_REGION;
+
+// Use /tmp directory for uploads on Vercel, local uploads otherwise
+const uploadsDir = isVercel
+    ? path.join('/tmp', 'uploads', 'images')
+    : path.join(__dirname, 'uploads', 'images');
+
+// Ensure uploads directory exists (only if not on Vercel or use /tmp)
+try {
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+        console.log('Created uploads directory:', uploadsDir);
+    }
+} catch (error) {
+    console.log('Could not create uploads directory (expected on Vercel):', error.message);
 }
 
 // Multer configuration for file uploads
@@ -29,6 +40,7 @@ const storage = multer.diskStorage({
         cb(null, uniqueName);
     }
 });
+
 const upload = multer({
     storage,
     fileFilter: (req, file, cb) => {
@@ -48,12 +60,20 @@ const upload = multer({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
+
+// Only serve local uploads in development
+if (!isVercel) {
+    app.use('/uploads', express.static('uploads'));
+}
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: process.env.NODE_ENV === 'production' }
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
 }));
 
 // Routes
@@ -96,6 +116,7 @@ app.get('/api/events', async (req, res) => {
         const events = await db.query('SELECT * FROM webdevsite ORDER BY id DESC');
         res.json({ success: true, data: events });
     } catch (error) {
+        console.error('Error fetching events:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -108,6 +129,7 @@ app.get('/api/events/:id', async (req, res) => {
         }
         res.json({ success: true, data: events[0] });
     } catch (error) {
+        console.error('Error fetching event:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -118,19 +140,35 @@ app.post('/api/events', auth.requireLoginJson, upload.single('image'), async (re
         const timestamp = new Date().toISOString();
         let imageUrl = '';
 
-        if (req.file) {
-            const targetPath = 'images/' + req.file.filename;
-            const result = await vercelBlobPut(targetPath, req.file.path);
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'Image file is required' });
+        }
 
-            if (result.success) {
-                imageUrl = result.url;
-                // Delete local file after upload
-                const fs = require('fs').promises;
-                await fs.unlink(req.file.path).catch(() => { });
-            } else {
-                // Keep local file if blob upload fails
-                imageUrl = req.file.filename;
+        // Always upload to Vercel Blob in production
+        const targetPath = 'images/' + req.file.filename;
+        const result = await vercelBlobPut(targetPath, req.file.path);
+
+        if (result.success) {
+            imageUrl = result.url;
+            console.log('Image uploaded to Blob:', imageUrl);
+
+            // Clean up temporary file
+            try {
+                await fs.promises.unlink(req.file.path);
+            } catch (err) {
+                console.log('Could not delete temp file:', err.message);
             }
+        } else {
+            console.error('Blob upload failed:', result.error);
+            // On Vercel, we must use Blob - fail if upload fails
+            if (isVercel) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to upload image to storage: ' + result.error
+                });
+            }
+            // In development, fallback to local storage
+            imageUrl = req.file.filename;
         }
 
         const id = await db.insertQuery(name, event, venue, topic, details, imageUrl, timestamp);
@@ -148,19 +186,33 @@ app.put('/api/events/:id', auth.requireLoginJson, upload.single('image'), async 
         let imageUrl = current_image;
 
         if (req.file) {
+            // Upload new image to Blob
             const targetPath = 'images/' + req.file.filename;
             const result = await vercelBlobPut(targetPath, req.file.path);
 
             if (result.success) {
                 imageUrl = result.url;
-                // Delete old image if it exists
-                if (current_image) {
+                console.log('New image uploaded to Blob:', imageUrl);
+
+                // Delete old image from Blob if it exists
+                if (current_image && current_image.match(/^https?:\/\//i)) {
                     await vercelBlobDelete(current_image);
                 }
-                // Delete local file
-                const fs = require('fs').promises;
-                await fs.unlink(req.file.path).catch(() => { });
+
+                // Clean up temporary file
+                try {
+                    await fs.promises.unlink(req.file.path);
+                } catch (err) {
+                    console.log('Could not delete temp file:', err.message);
+                }
             } else {
+                console.error('Blob upload failed:', result.error);
+                if (isVercel) {
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Failed to upload image to storage: ' + result.error
+                    });
+                }
                 imageUrl = req.file.filename;
             }
         }
@@ -168,15 +220,28 @@ app.put('/api/events/:id', auth.requireLoginJson, upload.single('image'), async 
         await db.update(id, name, event, venue, topic, details, imageUrl, current_image);
         res.json({ success: true });
     } catch (error) {
+        console.error('Error updating event:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
 app.delete('/api/events/:id', auth.requireLoginJson, async (req, res) => {
     try {
+        // Get the event to find the image URL
+        const events = await db.query('SELECT image FROM webdevsite WHERE id=$1', [req.params.id]);
+
+        if (events.length > 0 && events[0].image) {
+            const imageUrl = events[0].image;
+            // Delete from Blob if it's a Blob URL
+            if (imageUrl.match(/^https?:\/\//i)) {
+                await vercelBlobDelete(imageUrl);
+            }
+        }
+
         await db.delete(req.params.id);
         res.json({ success: true });
     } catch (error) {
+        console.error('Error deleting event:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -190,10 +255,11 @@ app.get('/api/distinct/:column', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Invalid column' });
         }
 
-        const results = await db.query(`SELECT DISTINCT ${column} FROM webdevsite WHERE ${column} IS NOT NULL`);
+        const results = await db.query(`SELECT DISTINCT ${column} FROM webdevsite WHERE ${column} IS NOT NULL ORDER BY ${column}`);
         const values = results.map(row => row[column]);
         res.json({ success: true, data: values });
     } catch (error) {
+        console.error('Error fetching distinct values:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -207,16 +273,33 @@ app.get('/api/search', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Invalid column' });
         }
 
-        const results = await db.query(`SELECT * FROM webdevsite WHERE ${column}=$1`, [value]);
+        const results = await db.query(`SELECT * FROM webdevsite WHERE ${column}=$1 ORDER BY id DESC`, [value]);
         res.json({ success: true, data: results });
     } catch (error) {
+        console.error('Error searching events:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        success: true,
+        environment: isVercel ? 'vercel' : 'local',
+        uploadsDir,
+        timestamp: new Date().toISOString()
+    });
 });
 
+// Export for Vercel
 module.exports = app;
+
+// Only listen if not on Vercel
+if (!isVercel) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log('Environment:', process.env.NODE_ENV || 'development');
+        console.log('Uploads directory:', uploadsDir);
+    });
+}

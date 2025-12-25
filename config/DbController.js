@@ -15,9 +15,10 @@ class DbController {
             password: config.password,
             database: config.database,
             port: config.port || 5432,
+            ssl: config.ssl || { rejectUnauthorized: false },
             max: 20,
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 2000,
+            connectionTimeoutMillis: 5000,
         });
 
         this.pool.on('error', (err) => {
@@ -62,8 +63,6 @@ class DbController {
     `;
 
         try {
-            const isNewImageUploaded = image !== currentImage;
-
             await this.pool.query(query, [
                 name,
                 event,
@@ -74,19 +73,6 @@ class DbController {
                 id
             ]);
 
-            // Only attempt to delete local files (not blob URLs)
-            if (isNewImageUploaded && currentImage) {
-                if (!/^https?:\/\//i.test(currentImage) && !currentImage.startsWith('/')) {
-                    const localPath = path.join('uploads', 'images', currentImage);
-                    try {
-                        await fs.access(localPath);
-                        await fs.unlink(localPath);
-                    } catch (err) {
-                        // File doesn't exist or can't be deleted, ignore
-                    }
-                }
-            }
-
             return true;
         } catch (error) {
             this.logError(error.message);
@@ -96,25 +82,9 @@ class DbController {
 
     async delete(id) {
         try {
-            // First get the image filename
-            const selectQuery = 'SELECT image FROM webdevsite WHERE id=$1';
-            const result = await this.pool.query(selectQuery, [id]);
-            const image = result.rows[0]?.image;
-
             // Delete the record
             const deleteQuery = 'DELETE FROM webdevsite WHERE id=$1';
             await this.pool.query(deleteQuery, [id]);
-
-            // Delete local file only if it's a local filename
-            if (image && !/^https?:\/\//i.test(image) && !image.startsWith('/')) {
-                const localPath = path.join('uploads', 'images', image);
-                try {
-                    await fs.access(localPath);
-                    await fs.unlink(localPath);
-                } catch (err) {
-                    // File doesn't exist or can't be deleted, ignore
-                }
-            }
 
             return true;
         } catch (error) {
@@ -138,40 +108,31 @@ class DbController {
     }
 
     logError(error) {
-        const logDir = path.join(__dirname, '..', 'logs');
-        const logPath = path.join(logDir, 'my-errors.log');
-        const timestamp = new Date().toISOString();
-        const logMessage = `[${timestamp}] SQL Error: ${error}\n`;
-
-        // Ensure logs directory exists
-        try {
-            if (!require('fs').existsSync(logDir)) {
-                require('fs').mkdirSync(logDir, { recursive: true });
-            }
-        } catch (err) {
-            console.error('Failed to create logs directory:', err);
-        }
-
-        fs.appendFile(logPath, logMessage).catch(err => {
-            console.error('Failed to write to log file:', err);
-        });
-
+        // Log to console (Vercel captures these)
         console.error('SQL Error:', error);
-    }
 
-    async uploadImage(imagePath, uploadDirectory) {
-        // Legacy helper retained for local dev
+        // Try to write to file system (will work locally, fail silently on Vercel)
         try {
-            const stats = await fs.stat(uploadDirectory);
-            if (stats.isDirectory()) {
-                const filename = path.basename(imagePath);
-                const destination = path.join(uploadDirectory, filename);
-                await fs.copyFile(imagePath, destination);
-                return true;
+            const logDir = path.join(__dirname, '..', 'logs');
+            const logPath = path.join(logDir, 'my-errors.log');
+            const timestamp = new Date().toISOString();
+            const logMessage = `[${timestamp}] SQL Error: ${error}\n`;
+
+            // Synchronous check to avoid promises
+            const fsSync = require('fs');
+            if (!fsSync.existsSync(logDir)) {
+                try {
+                    fsSync.mkdirSync(logDir, { recursive: true });
+                } catch (err) {
+                    // Ignore if can't create directory (Vercel)
+                }
             }
-            return false;
-        } catch (error) {
-            return false;
+
+            fs.appendFile(logPath, logMessage).catch(() => {
+                // Ignore file write errors on Vercel
+            });
+        } catch (err) {
+            // Ignore all file system errors
         }
     }
 }
