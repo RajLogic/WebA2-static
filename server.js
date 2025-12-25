@@ -83,7 +83,7 @@ app.use(session({
     saveUninitialized: false,
     rolling: true, // Refresh session on every request
     cookie: {
-        secure: false, // Set to false temporarily to debug
+        secure: true, // Set to false temporarily to debug
         httpOnly: true,
         maxAge: 60 * 60 * 1000, // 1 hour
         sameSite: 'lax' // Changed from strict to lax
