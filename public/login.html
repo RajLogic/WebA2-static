@@ -41,6 +41,12 @@
 
             const formData = new FormData(e.target);
             const errorDiv = document.getElementById('errorMessage');
+            const submitBtn = e.target.querySelector('.submit-button');
+
+            // Disable button during submission
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Logging in...';
+            errorDiv.style.display = 'none';
 
             try {
                 const response = await fetch('/api/login', {
@@ -57,16 +63,29 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const next = urlParams.get('next') || '/insertForm';
-                    window.location.href = next;
+                    // Refresh navigation to show logout button
+                    if (window.refreshNav) {
+                        await window.refreshNav();
+                    }
+
+                    // Small delay to show nav update
+                    setTimeout(() => {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const next = urlParams.get('next') || '/insertForm';
+                        window.location.href = next;
+                    }, 500);
                 } else {
                     errorDiv.textContent = result.error || 'Invalid username or password';
                     errorDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Login';
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 errorDiv.textContent = 'Login failed: ' + error.message;
                 errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Login';
             }
         });
     </script>
