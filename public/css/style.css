@@ -59,6 +59,67 @@ nav a {
 
 nav a:hover {
     color: #ffd700;
+
+}
+
+/* Add these styles to your existing style.css */
+
+/* User info display in navigation */
+nav .user-info {
+    display: inline-block;
+    color: #ffd700;
+    font-size: 14px;
+    padding: 5px 15px;
+    background-color: rgba(255, 215, 0, 0.1);
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+nav .user-info::before {
+    content: "👤 ";
+    font-size: 16px;
+}
+
+/* Login/Logout button styling */
+nav li:has(#logoutBtn) {
+    background-color: rgba(255, 100, 100, 0.2);
+}
+
+nav li:has(a[href="/login"]) {
+    background-color: rgba(100, 255, 100, 0.2);
+}
+
+nav #logoutBtn {
+    color: #ffcccc;
+}
+
+nav #logoutBtn:hover {
+    color: #ff6666;
+}
+
+/* Notification animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
 }
 
 
